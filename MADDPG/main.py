@@ -1,11 +1,13 @@
+#!/usr/bin/env python3
 import collections
 import numpy as np
 from pettingzoo.mpe import simple_adversary_v3, simple_push_v3, simple_v3, simple_spread_v3
 from MADDPG import MADDPG
 from ma_replay_buffet import MultiAgenReplayBuffer
-import wandb
+#import wandb
 import torch
 import gym
+import pandas as pd
 
 def dict_to_list(a):
     groups = []
@@ -40,7 +42,6 @@ if WANDB:
 import sys
 sys.stdout = open('file_out.txt', 'w')
 # print('Hello World!')
-sys.stdout.close()
 if INFERENCE:
     env = env_class.parallel_env(max_cycles=100, continuous_actions=True, render_mode="human")
 else:
@@ -64,12 +65,12 @@ for i in range(n_agents):
 
 critic_dims = sum(actor_dims)
 action_dim = env.action_space(env.agents[0]).shape[0]
-maddpg = MADDPG(actor_dims, critic_dims, n_agents, action_dim,chkpt_dir="multi_agent/MADDPG/nets", scenario=f"/{env_name}", seed=SEED)
+maddpg = MADDPG(actor_dims, critic_dims, n_agents, action_dim,chkpt_dir="nets", scenario=f"/{env_name}", seed=SEED)
 if INFERENCE:
     maddpg.load_checkpoint()
 memory = MultiAgenReplayBuffer(critic_dims, actor_dims, action_dim,n_agents, batch_size=BATCH_SIZE, buffer_size=100000,seed = SEED)
 # seed = 0
-rewards_history = collections.deque(maxlen=100)
+rewards_history = []
 rewards_tot = collections.deque(maxlen=100)
 for i in range(MAX_EPISODES):
     step = 0
@@ -111,17 +112,18 @@ for i in range(MAX_EPISODES):
         step += 1
         total_steps += 1
     score_history.append(score)
-    rewards_history.append(np.sum(rewards_ep_list, axis=0))
+    #rewards_history.append(np.sum(rewards_ep_list, axis=0))
     rewards_tot.append(sum(rewards))
     # print('episode ', i, 'score %.1f' % score, 'memory length ', len(memory))
     avg_score = np.mean(rewards_tot)
+    rewards_history.append(avg_score)
     if WANDB and i % 100 == 0:    
         wandb.log({#'avg_score_adversary':np.mean(np.array(rewards_history)[:,0][0]),\
                 # 'avg_score_agents':np.mean(np.array(rewards_history)[:,0][0]),\
                 # 'avg_score_agent1':np.mean(np.array(rewards_history)[:,1][0]),\
                 'total_rew':avg_score,'episode':i} )
            
-    if i > 5000 and avg_score > best_score:
+    if i > 2000 and avg_score > best_score:
         print("episode: ", i, "avg: ", avg_score, "best: ", best_score)
         best_score = avg_score
         if not INFERENCE:
@@ -133,4 +135,7 @@ for i in range(MAX_EPISODES):
 
         # 
 
-        
+reward_history_df = pd.DataFrame(rewards_history)
+reward_history_df.to_csv("reward_history.csv")
+print("-----END-----")
+sys.stdout.close()

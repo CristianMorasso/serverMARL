@@ -36,7 +36,7 @@ for i in range(n_agents):
 
 critic_dims = sum(actor_dims)
 action_dim = env.action_space(env.agents[0]).shape[0]
-maddpg = MADDPG(actor_dims, critic_dims, n_agents, action_dim, chkpt_dir="multi_agent/MADDPG/nets", scenario=f"/{env_name}")
+maddpg = MADDPG(actor_dims, critic_dims, n_agents, action_dim, chkpt_dir="nets", scenario=f"/{env_name}")
 maddpg.load_checkpoint()
 # maddpg.prep_rollouts(device='cpu')
 # observations, infos = env.reset(seed=13)

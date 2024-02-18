@@ -2,7 +2,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import wandb
+#import wandb
 
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, name, hidden_dim=256, chkpt_dir='tmp'):
@@ -29,12 +29,12 @@ class Actor(nn.Module):
         return x
     
     def save_checkpoint(self):
-        print('... saving checkpoint ...')
+        #print('... saving checkpoint ...')
         torch.save(self.state_dict(), self.chkpt_dir+'/'+self.name+'.pth')
 
     def load_checkpoint(self):
         print('... loading checkpoint ...')
-        self.load_state_dict(torch.load(self.chkpt_dir+'/'+self.name+ '.pth'))
+        self.load_state_dict(torch.load(self.chkpt_dir+'/'+self.name+ '.pth', map_location = torch.device("cpu")))
 
 class Critic(nn.Module):
     def __init__(self, state_dim, action_dim, n_agents, name, hidden_dim=256, chkpt_dir='tmp'):
@@ -58,12 +58,12 @@ class Critic(nn.Module):
         return x
     
     def save_checkpoint(self):
-        print('... saving checkpoint ...')
+        #print('... saving checkpoint ...')
         torch.save(self.state_dict(), self.chkpt_dir+'/'+self.name+'.pth')
 
     def load_checkpoint(self):
         print('... loading checkpoint ...')
-        self.load_state_dict(torch.load(self.chkpt_dir+'/'+self.name+'.pth'))   
+        self.load_state_dict(torch.load(self.chkpt_dir+'/'+self.name+'.pth', map_location = torch.device("cpu")))   
 
 class Agent:
     def __init__(self, actor_dims, critic_dims, n_actions,n_agents, agent_idx, chkpt_dir='tmp', \
