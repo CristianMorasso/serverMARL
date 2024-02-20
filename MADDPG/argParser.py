@@ -49,12 +49,18 @@ def parse_args():
         help="number of episode max")
     parser.add_argument("--n-step", type=int, default=1000,
         help="max step for episode")
-    parser.add_argument("--policy-frequency", type=int, default=2,
+    parser.add_argument("--learn-delay", type=int, default=2,
         help="the frequency of training policy (delayed)")
-    parser.add_argument("--actor-delay", type=int, default=2,
+    parser.add_argument("--update-delay", type=int, default=2,
         help="the frequency of actor update")
     parser.add_argument("--noise-clip", type=float, default=0.5,
         help="noise clip parameter of the Target Policy Smoothing Regularization")
+    parser.add_argument("--actor-hidden", type=int, default=64,
+        help="actor hidden layer nodes")
+    parser.add_argument("--critic-hidden", type=int, default=64,
+        help="critic hidden layer nodes")
+    parser.add_argument("--mod-params",type=str, default="Base", 
+        help="Hyperparams modified to save the run")
     args = parser.parse_args()
     # fmt: on
     return args
