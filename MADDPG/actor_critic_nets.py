@@ -5,7 +5,7 @@ import torch.nn.functional as F
 #import wandb
 
 class Actor(nn.Module):
-    def __init__(self, state_dim, action_dim, name, hidden_dim=256, chkpt_dir='tmp'):
+    def __init__(self, state_dim, action_dim, name,lr=0.001, hidden_dim=256, chkpt_dir='tmp'):
         super(Actor, self).__init__()
 
         self.fc1 = nn.Linear(state_dim, hidden_dim)
@@ -13,7 +13,7 @@ class Actor(nn.Module):
         self.fc3 = nn.Linear(hidden_dim, action_dim)
         self.name = name
         self.chkpt_dir = chkpt_dir
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.01)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.to(self.device)
         
@@ -37,15 +37,15 @@ class Actor(nn.Module):
         self.load_state_dict(torch.load(self.chkpt_dir+'/'+self.name+ '.pth', map_location = torch.device("cpu")))
 
 class Critic(nn.Module):
-    def __init__(self, state_dim, action_dim, n_agents, name, hidden_dim=256, chkpt_dir='tmp'):
+    def __init__(self, critic_dims, action_dim, n_agents, name,lr=0.001, hidden_dim=256, chkpt_dir='tmp'):
         super(Critic, self).__init__()
 
-        self.fc1 = nn.Linear(state_dim + n_agents* action_dim, hidden_dim)
+        self.fc1 = nn.Linear(critic_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = nn.Linear(hidden_dim, 1)
         self.chkpt_dir = chkpt_dir
         self.name = name
-        self.optimizer = torch.optim.Adam(self.parameters(), lr=0.01)
+        self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.to(self.device)
 
@@ -67,7 +67,7 @@ class Critic(nn.Module):
 
 class Agent:
     def __init__(self, actor_dims, critic_dims, n_actions,n_agents, agent_idx, chkpt_dir='tmp', \
-                 gamma=0.95, tau=0.01, seed = 0, noise_func = None):
+                 gamma=0.99, tau=0.01, seed = 0, noise_func = None, args = None):
         self.gamma = gamma
         self.tau = tau
         self.n_actions = n_actions
@@ -75,11 +75,11 @@ class Agent:
         torch.manual_seed(seed)
         torch.backends.cudnn.deterministic = True
 
-        self.actor = Actor(actor_dims, n_actions, self.name+'_actor', chkpt_dir=chkpt_dir, hidden_dim=64)
-        self.critic = Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_critic', chkpt_dir=chkpt_dir,hidden_dim=128)
+        self.actor = Actor(actor_dims, n_actions, self.name+'_actor', chkpt_dir=chkpt_dir,lr=args.learning_rate, hidden_dim=args.actor_hidden)
+        self.critic = Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_critic', chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.critic_hidden)
 
-        self.target_actor = Actor(actor_dims, n_actions, self.name+'_target_actor', chkpt_dir=chkpt_dir,hidden_dim=64)
-        self.target_critic = Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_target_critic', chkpt_dir=chkpt_dir,hidden_dim=128)
+        self.target_actor = Actor(actor_dims, n_actions, self.name+'_target_actor', chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.actor_hidden)
+        self.target_critic = Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_target_critic', chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.critic_hidden)
         if noise_func is None:
             self.noise_func = lambda x: 0.1
         else:
