@@ -1,34 +1,38 @@
 #!/usr/bin/env python3
 import collections
 import numpy as np
-from pettingzoo.mpe import simple_adversary_v3, simple_push_v3, simple_v3, simple_spread_v3
+from pettingzoo.mpe import simple_adversary_v3, simple_push_v3, simple_v3, simple_spread_v3, simple_speaker_listener_v4
 from MADDPG import MADDPG
 from ma_replay_buffet import MultiAgenReplayBuffer
+from argParser import parse_args
 #import wandb
 import torch
 import gym
 import pandas as pd
-
+import os
 def dict_to_list(a):
     groups = []
     for item in a:
         groups.append(list(item.values()))
     return  groups
-
+args = parse_args()
 INFERENCE = False
 PRINT_INTERVAL = 5000
-MAX_EPISODES = 50000
-BATCH_SIZE = 1024
+MAX_EPISODES = args.n_ep
+BATCH_SIZE = args.batch_size
 MAX_STEPS = 25
-SEED = 10
+SEED = args.seed
+BUFFER_SIZE = args.buffer_size
 total_steps = 0
 score = -10
 best_score = -100
 score_history = []
 WANDB = False
+
 project_name = "MADDPG"
-env_name = "simple_spread_v3"
-env_class= simple_spread_v3
+params = f"_{args.mod_params}"
+env_name = "simple_speaker_listener_v4"
+env_class= simple_speaker_listener_v4
 # env = simple_adversary_v3.env()
 if WANDB:
     wandb.init(
@@ -38,7 +42,8 @@ if WANDB:
         job_type=env_name,
         reinit=True
     )
-
+if not os.path.isdir(f"nets/{env_name}{params}"):
+    os.mkdir(f"nets/{env_name}{params}")
 import sys
 sys.stdout = open('file_out.txt', 'w')
 # print('Hello World!')
@@ -65,10 +70,10 @@ for i in range(n_agents):
 
 critic_dims = sum(actor_dims)
 action_dim = env.action_space(env.agents[0]).shape[0]
-maddpg = MADDPG(actor_dims, critic_dims, n_agents, action_dim,chkpt_dir="nets", scenario=f"/{env_name}", seed=SEED)
+maddpg = MADDPG(actor_dims, critic_dims, n_agents, action_dim,chkpt_dir="nets", scenario=f"/{env_name}{params}", seed=SEED, args = args)
 if INFERENCE:
     maddpg.load_checkpoint()
-memory = MultiAgenReplayBuffer(critic_dims, actor_dims, action_dim,n_agents, batch_size=BATCH_SIZE, buffer_size=100000,seed = SEED)
+memory = MultiAgenReplayBuffer(critic_dims, actor_dims, action_dim,n_agents, batch_size=BATCH_SIZE, buffer_size=BUFFER_SIZE,seed = SEED)
 # seed = 0
 rewards_history = []
 rewards_tot = collections.deque(maxlen=100)
@@ -104,7 +109,7 @@ for i in range(MAX_EPISODES):
         if not INFERENCE:
             memory.store_transition(obs, actions, rewards, obs_, done)
         
-        if (not INFERENCE) and total_steps % 50 == 0:
+        if (not INFERENCE) and total_steps % args.learn_delay == 0:
             maddpg.learn(memory)
         obs = obs_
         rewards_ep_list.append(rewards) 
@@ -136,6 +141,6 @@ for i in range(MAX_EPISODES):
         # 
 
 reward_history_df = pd.DataFrame(rewards_history)
-reward_history_df.to_csv("reward_history.csv")
+reward_history_df.to_csv(f"{env_name}{params}.csv")
 print("-----END-----")
 sys.stdout.close()
