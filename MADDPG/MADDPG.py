@@ -22,17 +22,18 @@ def noise_mul_func(ep, n_ep):
     ep_temp = ep/(n_ep*2/5000)
     return (98.5/100)**((ep_temp)/7.5)
 class MADDPG:
-    def __init__(self, actor_dims, critic_dims,  n_agents,n_actions, scenario="simple", gamma=0.95, tau=0.01, chkpt_dir='tmp', seed =0):
-        self.gamma = gamma
-        self.tau = tau
+    def __init__(self, actor_dims, critic_dims,  n_agents,n_actions, scenario="simple", gamma=0.99, tau=0.01, chkpt_dir='tmp', seed =0, args = None):
+        self.gamma = args.gamma
+        self.tau = args.tau
         self.n_actions = n_actions
         self.n_agents = n_agents
         self.agents = []
+        self.args = args
         torch.manual_seed(seed)
         torch.backends.cudnn.deterministic = True
         
         for i in range(self.n_agents):
-            agent = Agent(actor_dims[i], critic_dims, n_actions, n_agents, i, chkpt_dir=chkpt_dir+scenario, gamma=self.gamma, tau=self.tau, seed=seed, noise_func = noise_mul_func)
+            agent = Agent(actor_dims[i], critic_dims, n_actions, n_agents, i, chkpt_dir=chkpt_dir+scenario, gamma=self.gamma, tau=self.tau, seed=seed, noise_func = noise_mul_func, args=self.args)
             self.agents.append(agent)
         self.update = 0
     
@@ -92,7 +93,7 @@ class MADDPG:
             self.agents[i].actor.optimizer.step()
             
             # target update
-            if self.update % 2 == 0:
+            if self.update % args.update_delay == 0:
                 self.agents[i].update_target_networks(self.tau)
         self.update+=1
     def obs_list_to_state_vector(self, obs):
