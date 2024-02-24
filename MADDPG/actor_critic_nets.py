@@ -74,12 +74,12 @@ class Agent:
         self.name = "agent_"+str(agent_idx)
         torch.manual_seed(seed)
         torch.backends.cudnn.deterministic = True
+        
+        self.actor = [Actor(actor_dims, n_actions, self.name+'_actor_policy'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate, hidden_dim=args.actor_hidden) for i in range(args.sub_policy)]
+        self.critic = [Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_critic'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.critic_hidden) for i in range(args.sub_policy)]
 
-        self.actor = Actor(actor_dims, n_actions, self.name+'_actor', chkpt_dir=chkpt_dir,lr=args.learning_rate, hidden_dim=args.actor_hidden)
-        self.critic = Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_critic', chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.critic_hidden)
-
-        self.target_actor = Actor(actor_dims, n_actions, self.name+'_target_actor', chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.actor_hidden)
-        self.target_critic = Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_target_critic', chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.critic_hidden)
+        self.target_actor = [Actor(actor_dims, n_actions, self.name+'_target_actor'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.actor_hidden)for i in range(args.sub_policy)]
+        self.target_critic = [Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_target_critic'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.critic_hidden)for i in range(args.sub_policy)]
         if noise_func is None:
             self.noise_func = lambda x: 0.1
         else:
@@ -91,15 +91,18 @@ class Agent:
     def update_target_networks(self, tau=None):
         if tau is None:
             tau = self.tau
-        for target_param, param in zip(self.target_actor.parameters(), self.actor.parameters()):
-            target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
-        for target_param, param in zip(self.target_critic.parameters(), self.critic.parameters()):
-            target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
+
+        for ta, a in zip(self.target_actor, self.actor):
+            for target_param, param in zip(ta.parameters(), a.parameters()):
+                target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
+        for tc, c in zip(self.target_critic, self.critic):        
+            for target_param, param in zip(tc.parameters(), c.parameters()):
+                target_param.data.copy_(tau * param.data + (1 - tau) * target_param.data)
 
 
-    def get_action(self, state, eval=False, ep=1, max_ep=100, WANDB=False):
-        state = torch.tensor(state, dtype=torch.float32, device=self.actor.device)
-        action = self.actor(state).cpu().data.numpy()
+    def get_action(self, state, idx, eval=False, ep=1, max_ep=100, WANDB=False):
+        state = torch.tensor(state, dtype=torch.float32, device=self.actor[idx].device)
+        action = self.actor[idx](state).cpu().data.numpy()
         noise = self.noise_func(ep, max_ep)
         if WANDB:
             wandb.log({"noise": noise, 'ep_noise': ep})
@@ -109,15 +112,17 @@ class Agent:
         return action.clip(0,1)
 
     def save_models(self):
-        self.actor.save_checkpoint()
+        for actor in self.actor:
+            actor.save_checkpoint()
         self.critic.save_checkpoint()
         self.target_actor.save_checkpoint()
         self.target_critic.save_checkpoint()
 
     def load_models(self):
-        self.actor.load_checkpoint()
+        for actor in self.actor:
+            actor.save_checkpoint()
         self.critic.load_checkpoint()
-        self.target_actor.load_checkpoint()
+        self.target_actor.save_checkpoint()
         self.target_critic.load_checkpoint()    
 
 
