@@ -112,18 +112,18 @@ class Agent:
         return action.clip(0,1)
 
     def save_models(self):
-        for actor in self.actor:
-            actor.save_checkpoint()
-        self.critic.save_checkpoint()
-        self.target_actor.save_checkpoint()
-        self.target_critic.save_checkpoint()
+        for i in range(len(self.actor)):
+            self.actor[i].save_checkpoint()
+            self.critic[i].save_checkpoint()
+            self.target_actor[i].save_checkpoint()
+            self.target_critic[i].save_checkpoint()
 
     def load_models(self):
-        for actor in self.actor:
-            actor.save_checkpoint()
-        self.critic.load_checkpoint()
-        self.target_actor.save_checkpoint()
-        self.target_critic.load_checkpoint()    
+        for i in range(len(self.actor)):
+            self.actor[i].load_checkpoint()
+            self.critic[i].load_checkpoint()
+            self.target_actor[i].load_checkpoint()
+            self.target_critic[i].load_checkpoint() 
 
 
 
