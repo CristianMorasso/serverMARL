@@ -142,6 +142,6 @@ for i in range(MAX_EPISODES):
         # 
 
 reward_history_df = pd.DataFrame(rewards_history)
-reward_history_df.to_csv(f"{env_name}{params}.csv")
+reward_history_df.to_csv(f"out_csv/{env_name}{params}.csv")
 print("-----END-----")
 sys.stdout.close()
