@@ -119,7 +119,7 @@ class Agent:
             self.target_critic[i].save_checkpoint()
 
     def load_models(self):
-        for i in range(len(self.actor)):
+        for i in range(len(self.actor)): 
             self.actor[i].load_checkpoint()
             self.critic[i].load_checkpoint()
             self.target_actor[i].load_checkpoint()
