@@ -33,7 +33,7 @@ class MADDPG:
         torch.backends.cudnn.deterministic = True
         
         for i in range(self.n_agents):
-            agent = Agent(actor_dims[i], critic_dims, n_actions, n_agents, i, chkpt_dir=chkpt_dir+scenario, gamma=self.gamma, tau=self.tau, seed=seed, noise_func = noise_mul_func, args=self.args)
+            agent = Agent(actor_dims[i], critic_dims, n_actions[i], n_agents, i, chkpt_dir=chkpt_dir+scenario, gamma=self.gamma, tau=self.tau, seed=seed, noise_func = noise_mul_func, args=self.args)
             self.agents.append(agent)
         self.update = 0
     
@@ -93,7 +93,7 @@ class MADDPG:
             self.agents[i].actor.optimizer.step()
             
             # target update
-            if self.update % args.update_delay == 0:
+            if self.update % self.args.update_delay == 0:
                 self.agents[i].update_target_networks(self.tau)
         self.update+=1
     def obs_list_to_state_vector(self, obs):

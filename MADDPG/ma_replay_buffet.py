@@ -29,7 +29,7 @@ class MultiAgenReplayBuffer:
         for i in range(self.n_agents):
             self.actor_state_memory.append(np.zeros((self.buffer_size, self.actor_dims[i])))
             self.actor_new_state_memory.append(np.zeros((self.buffer_size, self.actor_dims[i])))
-            self.actor_action_memory.append(np.zeros((self.buffer_size, self.n_actions)))
+            self.actor_action_memory.append(np.zeros((self.buffer_size, self.n_actions[i])))
 
 
     def store_transition(self, state, action, reward, new_state, done):

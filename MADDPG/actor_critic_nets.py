@@ -40,7 +40,7 @@ class Critic(nn.Module):
     def __init__(self, critic_dims, action_dim, n_agents, name,lr=0.001, hidden_dim=256, chkpt_dir='tmp'):
         super(Critic, self).__init__()
 
-        self.fc1 = nn.Linear(critic_dim, hidden_dim)
+        self.fc1 = nn.Linear(critic_dims, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = nn.Linear(hidden_dim, 1)
         self.chkpt_dir = chkpt_dir

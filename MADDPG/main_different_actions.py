@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import collections
 import numpy as np
-from pettingzoo.mpe import simple_adversary_v3, simple_push_v3, simple_v3, simple_spread_v3, simple_speaker_listener_v4
+from pettingzoo.mpe import simple_reference_v3, simple_adversary_v3, simple_push_v3, simple_v3, simple_spread_v3, simple_speaker_listener_v4
 from MADDPG import MADDPG
 from ma_replay_buffet import MultiAgenReplayBuffer
 from argParser import parse_args
@@ -31,8 +31,8 @@ WANDB = False
 
 project_name = "MADDPG"
 params = f"_{args.mod_params}"
-env_name = "simple_speaker_listener_v4"
-env_class= simple_speaker_listener_v4
+env_name = "simple_spread_v3"
+env_class= simple_spread_v3
 # env = simple_adversary_v3.env()
 # if WANDB:
 #     wandb.init(
@@ -119,7 +119,7 @@ for i in range(MAX_EPISODES):
         total_steps += 1
     score_history.append(score)
     #rewards_history.append(np.sum(rewards_ep_list, axis=0))
-    rewards_tot.append(sum(rewards))
+    rewards_tot.append(np.sum(rewards_ep_list))
     # print('episode ', i, 'score %.1f' % score, 'memory length ', len(memory))
     avg_score = np.mean(rewards_tot)
     rewards_history.append(avg_score)
@@ -129,7 +129,7 @@ for i in range(MAX_EPISODES):
     #             # 'avg_score_agent1':np.mean(np.array(rewards_history)[:,1][0]),\
     #             'total_rew':avg_score,'episode':i} )
            
-    if i > 2000 and avg_score > best_score:
+    if i > MAX_EPISODES/20 and avg_score > best_score:
         print("episode: ", i, "avg: ", avg_score, "best: ", best_score)
         best_score = avg_score
         if not INFERENCE:
