@@ -74,11 +74,13 @@ critic_dims = sum(actor_dims)
 maddpg = MADDPG(actor_dims, critic_dims+sum(action_dim), n_agents, action_dim,chkpt_dir="nets", scenario=f"/{env_name}{params}", seed=SEED, args=args)
 if INFERENCE:
     maddpg.load_checkpoint()
-memory = MultiAgenReplayBuffer(critic_dims, actor_dims, action_dim,n_agents, batch_size=BATCH_SIZE, buffer_size=BUFFER_SIZE,seed = SEED)
+memory = [MultiAgenReplayBuffer(critic_dims, actor_dims, action_dim,n_agents, batch_size=BATCH_SIZE, buffer_size=BUFFER_SIZE,seed = SEED, args =args) for _ in range(args.sub_policy)]
 # seed = 0
 rewards_history = []
 rewards_tot = collections.deque(maxlen=100)
 for i in range(MAX_EPISODES):
+    
+    k = np.random.randint(0, args.sub_policy)
     step = 0
     obs, info = env.reset(seed=SEED+i)
     obs=list(obs.values())
@@ -95,7 +97,7 @@ for i in range(MAX_EPISODES):
         # obs = [ob for ob in obs.values()]
         # print(step, total_steps, i)
         
-        actions = maddpg.choose_action(obs, INFERENCE, ep=i, max_ep=MAX_EPISODES, WANDB=WANDB)
+        actions = maddpg.choose_action(obs, k=k, eval=INFERENCE,ep=i, max_ep=MAX_EPISODES, WANDB=WANDB)
         actions_dict = {agent:action.reshape(-1) for agent, action in zip(env.agents, actions)}
         data = env.step(actions_dict)
         data_processed = dict_to_list(data)
@@ -108,7 +110,7 @@ for i in range(MAX_EPISODES):
             done = [True] * n_agents
             # break
         if not INFERENCE:
-            memory.store_transition(obs, actions, rewards, obs_, done)
+            memory[k].store_transition(obs, actions, rewards, obs_, done)
         
         if (not INFERENCE) and total_steps % args.learn_delay == 0:
             maddpg.learn(memory)

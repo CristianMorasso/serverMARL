@@ -61,6 +61,8 @@ def parse_args():
         help="critic hidden layer nodes")
     parser.add_argument("--mod-params",type=str, default="Base", 
         help="Hyperparams modified to save the run")
+    parser.add_argument("--sub-policy",type=int, default=1, 
+        help="Number of K ensembled policies")
     args = parser.parse_args()
     # fmt: on
     return args

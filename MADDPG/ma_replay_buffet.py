@@ -2,7 +2,7 @@ import numpy as np
 import torch
 
 class MultiAgenReplayBuffer:
-    def __init__(self, critic_dims, actor_dims, n_actions, n_agents, buffer_size, batch_size = 512, seed = 0 ):
+    def __init__(self, critic_dims, actor_dims, n_actions, n_agents, buffer_size, batch_size = 512, seed = 0, args = None ):
         # self.critic_dims = critic_dims
         self.actor_dims =  actor_dims
         self.n_actions = n_actions
@@ -10,6 +10,7 @@ class MultiAgenReplayBuffer:
         self.buffer_size = buffer_size
         self.batch_size = batch_size
         self.seed = seed
+        self.args = args
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.pointer = 0
 
