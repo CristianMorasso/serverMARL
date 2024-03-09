@@ -30,9 +30,16 @@ score_history = []
 WANDB = False
 
 project_name = "MADDPG"
+out_dir = "out_csv" if args.seed == 1 else "seeds_test"
+nets_out_dir = "nets" if args.seed == 1 else "nets/seeds_test"
 params = f"_{args.mod_params}"
-env_name = "simple_spread_v3"
-env_class= simple_spread_v3
+env_name = args.env_id
+if args.env_id == "simple_spread_v3":
+    env_class= simple_spread_v3
+if args.env_id == "simple_speaker_listener_v4":
+    env_class= simple_speaker_listener_v4
+if args.env_id == "simple_adversary_v3":
+    env_class= simple_adversary_v3
 # env = simple_adversary_v3.env()
 # if WANDB:
 #     wandb.init(
@@ -42,8 +49,8 @@ env_class= simple_spread_v3
 #         job_type=env_name,
 #         reinit=True
 #     )
-if not os.path.isdir(f"nets/{env_name}{params}"):
-    os.mkdir(f"nets/{env_name}{params}")
+if not os.path.isdir(f"{nets_out_dir}/{env_name}{params}"):
+    os.mkdir(f"{nets_out_dir}/{env_name}{params}")
 import sys
 sys.stdout = open('file_out.txt', 'w')
 # print('Hello World!')
@@ -71,7 +78,7 @@ for i in range(n_agents):
     action_dim.append(env.action_space(env.agents[i]).shape[0])#s[list(env.action_spaces.keys())[i]].shape[0])
 critic_dims = sum(actor_dims)
 # action_dim = env.action_space(env.agents[0]).shape[0]
-maddpg = MADDPG(actor_dims, critic_dims+sum(action_dim), n_agents, action_dim,chkpt_dir="nets", scenario=f"/{env_name}{params}", seed=SEED, args=args)
+maddpg = MADDPG(actor_dims, critic_dims+sum(action_dim), n_agents, action_dim,chkpt_dir=f"{nets_out_dir}", scenario=f"/{env_name}{params}", seed=SEED, args=args)
 if INFERENCE:
     maddpg.load_checkpoint()
 memory = [MultiAgenReplayBuffer(critic_dims, actor_dims, action_dim,n_agents, batch_size=BATCH_SIZE, buffer_size=BUFFER_SIZE,seed = SEED, args =args) for _ in range(args.sub_policy)]
@@ -144,6 +151,6 @@ for i in range(MAX_EPISODES):
         # 
 
 reward_history_df = pd.DataFrame(rewards_history)
-reward_history_df.to_csv(f"out_csv/{env_name}{params}.csv")
+reward_history_df.to_csv(f"{out_dir}/{env_name}{params}.csv")
 print("-----END-----")
 sys.stdout.close()
