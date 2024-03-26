@@ -20,7 +20,7 @@ from pettingzoo.mpe import simple_adversary_v3
 
 def noise_mul_func(ep, n_ep):
     ep_temp = ep/(n_ep*2/5000)
-    return (98.5/100)**((ep_temp)/7.5)
+    return round((98.5/100)**((ep_temp)/4), 2)
 class MADDPG:
     def __init__(self, actor_dims, critic_dims,  n_agents,n_actions, scenario="simple", gamma=0.99, tau=0.01, chkpt_dir='tmp', seed =0, args = None):
         self.gamma = args.gamma
