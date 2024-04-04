@@ -5,14 +5,14 @@ import torch.nn.functional as F
 #import wandb
 
 class Actor(nn.Module):
-    def __init__(self, state_dim, action_dim, name,lr=0.001, hidden_dim=256, chkpt_dir='tmp'):
+    def __init__(self, state_dim, action_dim, name,lr=0.001, hidden_dim=256, chkpt_dir='tmp',out_act_string=""):
         super(Actor, self).__init__()
-	#act_func_dict = {"sofmax": lambda x: torch.softmax(x, dim=-1), "sigmoid": lambda x : torch.sigmoid(x),\
-	#	 "tanh": lambda x : torch.tanh(x)}
+        act_func_dict = {"sofmax": lambda x: torch.softmax(x, dim=-1), "sigmoid": lambda x : torch.sigmoid(x),\
+		 "tanh": lambda x : torch.tanh(x), "": lambda x:x}
         self.fc1 = nn.Linear(state_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = nn.Linear(hidden_dim, action_dim)
-	#self.out_act_func = act_func_dict[out_act_func]
+        self.out_act_func = act_func_dict[out_act_string]
         self.name = name
         self.chkpt_dir = chkpt_dir
         self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
@@ -27,7 +27,8 @@ class Actor(nn.Module):
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        x = torch.sigmoid(x) #torch.softmax(x, dim=-1)#torch.tanh(x)
+        x = self.out_act_func(x)
+        #x = torch.sigmoid(x) #torch.softmax(x, dim=-1)#torch.tanh(x)
         return x
     
     def save_checkpoint(self):
@@ -77,10 +78,10 @@ class Agent:
         torch.manual_seed(seed)
         torch.backends.cudnn.deterministic = True
         
-        self.actor = [Actor(actor_dims, n_actions, self.name+'_actor_policy'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate, hidden_dim=args.actor_hidden) for i in range(args.sub_policy)]
+        self.actor = [Actor(actor_dims, n_actions, self.name+'_actor_policy'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate, hidden_dim=args.actor_hidden, out_act_string = args.out_act) for i in range(args.sub_policy)]
         self.critic = [Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_critic'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.critic_hidden) for i in range(args.sub_policy)]
 
-        self.target_actor = [Actor(actor_dims, n_actions, self.name+'_target_actor'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.actor_hidden)for i in range(args.sub_policy)]
+        self.target_actor = [Actor(actor_dims, n_actions, self.name+'_target_actor'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.actor_hidden, out_act_string = args.out_act)for i in range(args.sub_policy)]
         self.target_critic = [Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_target_critic'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.critic_hidden)for i in range(args.sub_policy)]
         if noise_func is None:
             self.noise_func = lambda x: 0.1

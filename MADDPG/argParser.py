@@ -63,6 +63,8 @@ def parse_args():
         help="Hyperparams modified to save the run")
     parser.add_argument("--sub-policy",type=int, default=1, 
         help="Number of K ensembled policies")
+    parser.add_argument("--out-act", type=str, default="",
+        help="[sigmoid, softmax, tanh, *emptystring*] to choose last layer act func")
     args = parser.parse_args()
     # fmt: on
     return args
