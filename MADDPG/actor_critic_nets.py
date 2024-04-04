@@ -7,10 +7,12 @@ import torch.nn.functional as F
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, name,lr=0.001, hidden_dim=256, chkpt_dir='tmp'):
         super(Actor, self).__init__()
-
+	#act_func_dict = {"sofmax": lambda x: torch.softmax(x, dim=-1), "sigmoid": lambda x : torch.sigmoid(x),\
+	#	 "tanh": lambda x : torch.tanh(x)}
         self.fc1 = nn.Linear(state_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = nn.Linear(hidden_dim, action_dim)
+	#self.out_act_func = act_func_dict[out_act_func]
         self.name = name
         self.chkpt_dir = chkpt_dir
         self.optimizer = torch.optim.Adam(self.parameters(), lr=lr)
@@ -25,7 +27,7 @@ class Actor(nn.Module):
         x = F.relu(self.fc1(state))
         x = F.relu(self.fc2(x))
         x = self.fc3(x)
-        x = torch.softmax(x, dim=1)
+        x = torch.sigmoid(x) #torch.softmax(x, dim=-1)#torch.tanh(x)
         return x
     
     def save_checkpoint(self):
