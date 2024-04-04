@@ -7,7 +7,7 @@ import torch.nn.functional as F
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, name,lr=0.001, hidden_dim=256, chkpt_dir='tmp',out_act_string=""):
         super(Actor, self).__init__()
-        act_func_dict = {"sofmax": lambda x: torch.softmax(x, dim=-1), "sigmoid": lambda x : torch.sigmoid(x),\
+        act_func_dict = {"softmax": lambda x: torch.softmax(x, dim=-1), "sigmoid": lambda x : torch.sigmoid(x),\
 		 "tanh": lambda x : torch.tanh(x), "": lambda x:x}
         self.fc1 = nn.Linear(state_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
