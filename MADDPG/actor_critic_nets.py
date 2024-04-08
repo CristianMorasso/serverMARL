@@ -77,11 +77,12 @@ class Agent:
         self.name = "agent_"+str(agent_idx)
         torch.manual_seed(seed)
         torch.backends.cudnn.deterministic = True
-        
-        self.actor = [Actor(actor_dims, n_actions, self.name+'_actor_policy'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate, hidden_dim=args.actor_hidden, out_act_string = args.out_act) for i in range(args.sub_policy)]
+        sl_env_out = args.out_act_ls if agent_idx else args.out_act_sp
+        out_act_string = sl_env_out if args.env_id == "simple_speaker_listener_v4" else args.out_act
+        self.actor = [Actor(actor_dims, n_actions, self.name+'_actor_policy'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate, hidden_dim=args.actor_hidden, out_act_string = out_act_string) for i in range(args.sub_policy)]
         self.critic = [Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_critic'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.critic_hidden) for i in range(args.sub_policy)]
 
-        self.target_actor = [Actor(actor_dims, n_actions, self.name+'_target_actor'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.actor_hidden, out_act_string = args.out_act)for i in range(args.sub_policy)]
+        self.target_actor = [Actor(actor_dims, n_actions, self.name+'_target_actor'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.actor_hidden, out_act_string = out_act_string)for i in range(args.sub_policy)]
         self.target_critic = [Critic(critic_dims, n_actions, n_agents=n_agents, name=self.name+'_target_critic'+str(i), chkpt_dir=chkpt_dir,lr=args.learning_rate,hidden_dim=args.critic_hidden)for i in range(args.sub_policy)]
         if noise_func is None:
             self.noise_func = lambda x: 0.1

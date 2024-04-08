@@ -65,6 +65,10 @@ def parse_args():
         help="Number of K ensembled policies")
     parser.add_argument("--out-act", type=str, default="",
         help="[sigmoid, softmax, tanh, *emptystring*] to choose last layer act func")
+    parser.add_argument("--out-act-sp", type=str, default="",
+        help="[sigmoid, softmax, tanh, *emptystring*] to choose last layer act func for speaker")
+    parser.add_argument("--out-act-ls", type=str, default="",
+        help="[sigmoid, softmax, tanh, *emptystring*] to choose last layer act func for listener")
     args = parser.parse_args()
     # fmt: on
     return args
